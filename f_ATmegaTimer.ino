@@ -19,11 +19,11 @@
  * 
  */
 volatile uint16_t clock_stretch;
-volatile boolean firstcall5;
+volatile boolean firstcall;
 
 ISR(TIMER5_COMPC_vect) {
-  if (firstcall5) {
-    firstcall5 = false;
+  if (firstcall) {
+    firstcall = false;
     return;
   }
   // compare match interrupt service routine (Timer 5 C)
@@ -78,7 +78,7 @@ void StartSyncSignal(int vidmode)
   TCCR5A |= _BV(COM5B1); // connect OC5B pin (the internal OC5B register is LOW)
 
   // * the first compare match interrupt call is bogus.
-  firstcall5 = true;
+  firstcall = true;
   
   if (stretch != 0) {
     // number of ticks the last HSYNC before VSYNC longer than others
@@ -133,7 +133,7 @@ void StopSyncSignal()
 }
 
 // For Time Lapse
-// generating periodic TRIG by using Timer3 Compare Match C interrupt
+// generating periodic shutter by using Timer3 Compare Match C interrupt
 
 volatile int8_t lapse = -1;
 
