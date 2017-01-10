@@ -141,6 +141,9 @@ void updateLCD()
               case STATE_START:
               case STATE_SYNC_ON:
               case STATE_RECORDING:
+              case STATE_SYNC_OFF:
+              case STATE_RESTART:
+              case STATE_PAUSE:
                 lcd.print(F("Shooting...     "));
                 break;
               default:

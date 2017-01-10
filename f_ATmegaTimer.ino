@@ -135,14 +135,14 @@ void StopSyncSignal()
 // For Time Lapse
 // generating periodic TRIG by using Timer3 Compare Match C interrupt
 
-volatile int8_t lapse;
+volatile int8_t lapse = -1;
 
 // interrupt interval 1 second
 #define TIMER3_COUNTS (16000000UL / 1024UL) // 16MHz. prescaler divisor 1024
 
 ISR(TIMER3_COMPC_vect) {
   noInterrupts();
-  if (++lapse == setting.p.timelapse_rate) {
+  if (++lapse == setting.p.timelapse_rate && recording_state == STATE_PAUSE) {
     recording_state = STATE_RESTART;
     lapse = 0;
   }
@@ -163,14 +163,15 @@ void StartTimerInterrupt()
   TCCR3A = 0;
   // the following registers can be set properly only after WGMn is set
   ICR3 = TIMER3_COUNTS - 1;       // TOP (1s)
-  TCNT3 = TIMER3_COUNTS - 2;
+  TCNT3 = 0;
   TIMSK3 = _BV(OCIE3C); // output compare C match interrupt enable
-  lapse = -2;
+  if (lapse != -1) { // the first call to ISR is bogus
+    lapse = 0;
+  }
   interrupts();
   TCCR3B |= _BV(CS32) | _BV(CS30); // CS3[2:0] = 5 (internal clock source. prescaler divisor 1024)
 
   GTCCR = 0; // start counting
-  recording_state = STATE_START;
 }
 
 void StopTimerInterrupt()

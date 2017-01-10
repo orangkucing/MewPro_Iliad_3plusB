@@ -1,17 +1,19 @@
 // these functions are called after camera power on
 void startup_delay0()
 {
-  delay(5000);
+  delay(6000);
 }
 
 void startup_delay()
 {
   delay(1000);
 }
+
 void startup0()
 {
   Broadcast_ChangeSettings();
 }
+
 //
 
 void sprintHex(int index, uint8_t d)

@@ -5,7 +5,7 @@
 #include "Videomode.h"
 #include "MenuText.h"
 
-#define __VERSION_STRING__ "v1.1.1"
+#define __VERSION_STRING__ "v1.1.2"
 
 #include <LiquidCrystal.h>
 // initialize the library with the numbers of the interface pins
@@ -37,6 +37,7 @@ int fifo_readindex = 0;
 int fifo_writeindex = 0;
 #define FIFO(i) (command_buf[(fifo_writeindex + (i)) % MEWPRO_BUFFER_LENGTH])
 #define FIFO_INC(n) do { fifo_writeindex = (fifo_writeindex + (n)) % MEWPRO_BUFFER_LENGTH; } while (0)
+#define WRITE_CHAR(c) do { BROADCAST.write(c); SERIAL.print(c); } while (0)
 
 byte buf[MEWPRO_BUFFER_LENGTH];
 int bufp = 1;
@@ -70,7 +71,8 @@ union {
 #define STATE_STOP      4
 #define STATE_END       5
 #define STATE_SYNC_OFF  6
-#define STATE_RESTART   7
+#define STATE_RESTART   7  // timelapse only
+#define STATE_PAUSE     8  // timelapse only
 char setup_id = 0;
 char disp_state = MENU_START;
 volatile char recording_state = STATE_IDLE;
@@ -91,6 +93,7 @@ void startup0(void);
 void (*startup[])(void) = {
   startup_delay0,
   startup0, startup_delay,
+  startup0, // the first TD is ignored by camera sometimes... so we send the same thing twice.
   NULL
 };
 

@@ -116,7 +116,6 @@ void parseSerialWrite()
             recording_state = STATE_STOP;
             break;
           case 1: // shutter button depressed. start
-            Serial.println(millis(), DEC);
             recording_state = STATE_START;
             break;
         }
