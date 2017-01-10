@@ -5,7 +5,7 @@
 #include "Videomode.h"
 #include "MenuText.h"
 
-#define __VERSION_STRING__ "v1.1.2"
+#define __VERSION_STRING__ "v1.1.3"
 
 #include <LiquidCrystal.h>
 // initialize the library with the numbers of the interface pins
@@ -78,8 +78,6 @@ char disp_state = MENU_START;
 volatile char recording_state = STATE_IDLE;
 unsigned long start_time;
 unsigned int record_time;
-
-unsigned long timelapse = 0;  // used by MODE_TIMELAPSE
 
 // startup
 #define STARTUP_HALT (-1)
