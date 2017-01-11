@@ -5,7 +5,7 @@
 #include "Videomode.h"
 #include "MenuText.h"
 
-#define __VERSION_STRING__ "v1.1.3"
+#define __VERSION_STRING__ "v1.1.4"
 
 #include <LiquidCrystal.h>
 // initialize the library with the numbers of the interface pins

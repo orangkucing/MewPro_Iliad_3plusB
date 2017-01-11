@@ -19,13 +19,8 @@
  * 
  */
 volatile uint16_t clock_stretch;
-volatile boolean firstcall;
 
 ISR(TIMER5_COMPC_vect) {
-  if (firstcall) {
-    firstcall = false;
-    return;
-  }
   // compare match interrupt service routine (Timer 5 C)
   noInterrupts(); // temporary disable other high priority interrupts
   asm volatile(
@@ -54,8 +49,7 @@ void StartSyncSignal(int vidmode)
   noInterrupts();
   // Note: ATmega2560's fast PWM is buggy.
   //   1. fast PWM mode 15 doesn't work unless TOP < 256.
-  //   2. the first compare match interrupt call is bogus (see *).
-  //   3. the first match is ignored under certain conditions (see ** and ***).
+  //   2. the first match is ignored under certain conditions (see * and **).
 
   // Timer 5 (VSYNC)
   // COM5B[1:0] = 2 : clear OC5B on compare match, set OC5B at BOTTOM
@@ -70,24 +64,22 @@ void StartSyncSignal(int vidmode)
   ICR5 = vsync - 1; // TOP
   TCCR5B |= _BV(CS52) | _BV(CS51); // CS5[2:0] = 6 (external clock source on T5. clock on falling edge)
 
-  // ** using an external clock source ATmega2560 has a bug that causes the first match ignored
+  // * using an external clock source ATmega2560 has a bug that causes the first match ignored
   // WORKAROUND: toggle T5 to go beyond the first
   for (int i = 0; i < vsync + 1; i++) {
     TCCR4C |= _BV(FOC4C); TCCR4C |= _BV(FOC4C);
   }
   TCCR5A |= _BV(COM5B1); // connect OC5B pin (the internal OC5B register is LOW)
-
-  // * the first compare match interrupt call is bogus.
-  firstcall = true;
   
   if (stretch != 0) {
     // number of ticks the last HSYNC before VSYNC longer than others
     clock_stretch = stretch - 10; // updating TCNT4 requires 10 clock cycles (625.0ns)
+    TIFR5 = _BV(OCF5C);   // clear output compare C match flag
     TIMSK5 = _BV(OCIE5C); // output compare C match interrupt enable
   }
 
   // Timer 4 (HSYNC)
-  // *** keep COM4B[1:0] == COM4C[1:0] otherwise either of the first matches will be ignored
+  // ** keep COM4B[1:0] == COM4C[1:0] otherwise either of the first matches will be ignored
   // COM4B[1:0] = 2 : clear OC4B on compare match, set OC4B at BOTTOM
   // COM4C[1:0] = 2 : clear OC4C on compare match, set OC4C at BOTTOM
   // WGM4[3:0] = 14 : fast PWM mode 14
@@ -135,7 +127,7 @@ void StopSyncSignal()
 // For Time Lapse
 // generating periodic shutter by using Timer3 Compare Match C interrupt
 
-volatile int8_t lapse = -1;
+volatile int8_t lapse;
 
 // interrupt interval 1 second
 #define TIMER3_COUNTS (16000000UL / 1024UL) // 16MHz. prescaler divisor 1024
@@ -164,10 +156,9 @@ void StartTimerInterrupt()
   // the following registers can be set properly only after WGMn is set
   ICR3 = TIMER3_COUNTS - 1;       // TOP (1s)
   TCNT3 = 0;
+  TIFR3 = _BV(OCF3C);   // clear output compare C match flag
   TIMSK3 = _BV(OCIE3C); // output compare C match interrupt enable
-  if (lapse != -1) { // the first call to ISR is bogus
-    lapse = 0;
-  }
+  lapse = 0;
   interrupts();
   TCCR3B |= _BV(CS32) | _BV(CS30); // CS3[2:0] = 5 (internal clock source. prescaler divisor 1024)
 
