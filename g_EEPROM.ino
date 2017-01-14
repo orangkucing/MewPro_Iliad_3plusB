@@ -8,7 +8,7 @@ void ROM_Read()
   byte *addr;
   boolean f = true;
   // signature check
-  char tmp[EEPROM_ID_LEN + 1] = IDSTRING;
+  char tmp[EEPROM_ID_LEN + 1] = IDSTRING ":" __VERSION_STRING__;
   
   for (i = 0; i < EEPROM_ID_LEN; i++) {
      f &= (EEPROM.read(i) == tmp[i]);
