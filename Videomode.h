@@ -20,7 +20,7 @@ const unsigned int syncTime[][3] PROGMEM = {
 // {HSYNC (clock), VSYNC (pulse), STRETCH (clock)}
 // 12            15            24                25              30              48             50             60             100            120           240         12.5
 // 0x00: WVGA                 848x480
-_NA_,           _NA_,           _NA_,           _NA_,           _NA_,           _NA_,           _NA_,          _NA_,          _NA_,          _NA_,         {80,825,529},_NA_,
+_NA_,           _NA_,           _NA_,           _NA_,           _NA_,           _NA_,           _NA_,          _NA_,          _NA_,          _NA_,         {80,825,667},_NA_,
 // 0x01: 720                 1280x720
 _NA_,           _NA_,           _NA_,           _NA_,           _NA_,           _NA_,           {142,2250,500},{121,2200,11}, {200,800,0},   {173,770,508},_NA_,        _NA_,
 // 0x02: 960                 1280x960
