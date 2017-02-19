@@ -130,7 +130,7 @@ void checkGenlockState_Timelapse()
       break;
     case STATE_START:
       delay(165);
-      StartTimerInterrupt();
+      StartTimerInterrupt(setting.p.timelapse_rate);
       command_sent = millis();
       recording_state = STATE_SYNC_ON;
       break;
@@ -157,21 +157,15 @@ void checkGenlockState_Timelapse()
       recording_state = STATE_PAUSE;
       break;
     case STATE_PAUSE:
+      if (rate == 0) {
+        recording_state = STATE_IDLE;
+        updateLCD();
+      }
       break;
     case STATE_RESTART:
       command_sent = millis();
       WRITE_CHAR('S'); WRITE_CHAR('Y'); WRITE_CHAR('2'); WRITE_CHAR('\n');
       recording_state = STATE_SYNC_ON;
-      break;
-    case STATE_STOP:
-      SERIAL.println(F("genlock signal stop"));
-      StopSyncSignal();
-      recording_state = STATE_END;
-      break;    
-    case STATE_END:
-      StopTimerInterrupt();
-      recording_state = STATE_IDLE;
-      updateLCD();
       break;
   }
 }

@@ -113,7 +113,11 @@ void parseSerialWrite()
       case ('S' << 8) + 'Y': // SET_CAMERA_3D_SYNCHRONIZE
         switch (buf[3]) {
           case 0: // sync stop
-            recording_state = STATE_STOP;
+            if (setting.p.mode == MODE_TIMELAPSE) {
+              StopTimerInterrupt();
+            } else {
+              recording_state = STATE_STOP;
+            }
             break;
           case 1: // shutter button depressed. start
             recording_state = STATE_START;
