@@ -5,11 +5,9 @@ Sync Generator/Controller for Hero 3+ Black and MewPro.
 
 All MewPro boards including older MewPro 1 w/ Arduino Pro Mini or Teensy or GR-Kurumi, and newer MewPro 2 or MewPro Cable work with MewPro Iliad.
 
-MewPro boards must be installed MewPro software for Hero 3+ Black (with compiler directive USE_GENLOCK defined).
-
 ### Supported video modes
 
-All the video modes that GoPro Hero 3+ Black can shoot are supported.
+All the video modes that GoPro Hero 3+ Black can shoot are supported. Also timelapse photography is supported with genlock.
 
 # How To Update Iliad Software
 
