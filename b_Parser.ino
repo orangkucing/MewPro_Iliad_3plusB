@@ -6,27 +6,27 @@ void printHex(uint8_t d, boolean upper)
   if (t > '9') {
     t += a - '9' - 1;
   }
-  SERIAL.print(t);
+  DEBUG_print(t);
   t = d & 0xF | '0';
   if (t > '9') {
     t += a - '9' - 1;
   }
-  SERIAL.print(t);
+  DEBUG_print(t);
 }
 
 void _printOutPut()
 {
   int buflen = buf[0];
-  SERIAL.print(F("> "));
+  DEBUG_print(F("> "));
   for (int i = 1; i <= buflen; i++) {
     if ((i == 1 || i == 2) && isprint(buf[i])) {
-      SERIAL.print(' '); SERIAL.print((char) buf[i]);
+      DEBUG_print(' '); DEBUG_print((char) buf[i]);
     } else {
       printHex(buf[i], false);
     }
-    SERIAL.print(' ');
+    DEBUG_print(' ');
   }
-  SERIAL.println("");
+  DEBUG_println("");
 }
 
 // parse command that is broadcasted to cameras
@@ -102,6 +102,10 @@ void parseSerialWrite()
           case 0: // power off
             disp_state = MENU_START;
             ROM_write(); // store settings to EEPROM
+            // software reset within 1s
+            wdt_enable(WDTO_1S);
+            while (1); // loop forever
+            // never reach here
             break;
         }
         break;
@@ -125,7 +129,16 @@ void parseSerialWrite()
         }
         break;
       case ('T' << 8) + 'D': // SET_CAMERA_SETTING
+#ifdef USE_RTC
         rtc.adjust(DateTime((int)(2000 + buf[3]), buf[4], buf[5], buf[6], buf[7], buf[8]));
+#else
+        {
+          TimeElements tE;
+          tE.Year = (int)(2000 + buf[3] - 1970); tE.Month = buf[4]; tE.Day = buf[5];
+          tE.Hour = buf[6]; tE.Minute = buf[7]; tE.Second = buf[8];
+          setTime(makeTime(tE));
+        }
+#endif
         setting.p.mode = buf[9];
         setting.p.photo_resolution = buf[10];
         // buf[11]
@@ -163,7 +176,16 @@ void parseSerialWrite()
         setting.p.timelapse_rate = buf[3];
         break;
       case ('T' << 8) + 'M': // SET_CAMERA_DATE_TIME
+#ifdef USE_RTC
         rtc.adjust(DateTime((int)(2000 + buf[3]), buf[4], buf[5], buf[6], buf[7], buf[8]));
+#else
+        {
+          TimeElements tE;
+          tE.Year = (int)(2000 + buf[3] - 1970); tE.Month = buf[4]; tE.Day = buf[5];
+          tE.Hour = buf[6]; tE.Minute = buf[7]; tE.Second = buf[8];
+          setTime(makeTime(tE));
+        }
+#endif
         break;
       case ('T' << 8) + 'S': // SET_CAMERA_TIME_LAPSE
         // obsolete (use TI)

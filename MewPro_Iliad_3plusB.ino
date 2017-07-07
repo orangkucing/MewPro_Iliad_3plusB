@@ -6,33 +6,27 @@ void setup()
   ROM_Read();
 
   // setup LCD
-  lcd.begin(LCD_SIZE_X, LCD_SIZE_Y);
-  updateLCD();
+  initLCD();
 
   // setup IR remote
-  irrecv.enableIRIn();
+  initIRremote();
 
   // momentary switches
-  pinMode(SETUP_SWITCH, INPUT_PULLUP);
-  pinMode(SHUTTER_SWITCH, INPUT_PULLUP);
-  pinMode(MODE_SWITCH, INPUT_PULLUP);
+  initSwitch();
 
   // RTC
-  rtc.begin();
-  if (rtc.lostPower()) {
-    // following line sets the RTC to the date & time this sketch was compiled
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
+  initRTC();
   
   StopSyncSignal();       // initialize timer
+#if defined(__AVR_ATmega2560__)
   BROADCAST.begin(57600); // 57600 is the fastest communication rate for AVR8 8MHz 3.3V on MewPro boards
   BROADCAST_UART_RECEIVER_DISABLE;
+#endif
 
   digitalWrite(SECONDARY_RESET, LOW);
   pinMode(SECONDARY_RESET, OUTPUT);
-  delay(100);
-  digitalWrite(SECONDARY_RESET, HIGH);
-
+  delay(1000);
+  pinMode(SECONDARY_RESET, INPUT_PULLUP);
   digitalWrite(TRIG, HIGH);
   pinMode(TRIG, OUTPUT);
 }
@@ -42,8 +36,11 @@ void loop()
   // start up sessions
   if (startupSession != STARTUP_HALT) {
     if (startup[startupSession] != NULL) {
-      (startup[startupSession++])(); // call the function
+      if ((startup[startupSession])()) { // call the function
+        startupSession++; // one function completed
+      }
     } else {
+      __emptyInputBuffer();
       startupSession = STARTUP_HALT;
       updateLCD();
     }

@@ -1,4 +1,12 @@
+#ifdef USE_LCD
+
 #define BLINK() do { lcd.setCursor(0, 1); lcd.blink(); } while (0)
+
+void initLCD()
+{
+  lcd.begin(LCD_SIZE_X, LCD_SIZE_Y);
+  updateLCD();
+}
 
 void LCDprint_P(int row, char *txt)
 {
@@ -199,3 +207,18 @@ void updateLCD()
   }
 }
 
+#else
+
+void initLCD()
+{
+}
+
+void LCDprint_P(int row, char *txt)
+{
+}
+
+void updateLCD()
+{
+}
+
+#endif

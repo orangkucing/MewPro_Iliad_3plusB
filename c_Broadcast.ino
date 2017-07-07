@@ -1,17 +1,35 @@
-// these functions are called after camera power on
-void startup_delay0()
+// these functions are called after camera power on and these should not block the main loop()
+unsigned long startup_exec; // last execution time of a startup function
+
+boolean startup_init()
 {
-  delay(6000);
+  startup_exec = millis();
+  return true;
 }
 
-void startup_delay()
+boolean startup_delay0()
 {
-  delay(1000);
+  if (millis() - startup_exec > 6000UL) {
+    startup_exec = millis();
+    return true;
+  }
+  return false;
 }
 
-void startup0()
+boolean startup_delay()
+{
+  if (millis() - startup_exec > 1000UL) {
+    startup_exec = millis();
+    return true;
+  }
+  return false;
+}
+
+boolean startup0()
 {
   Broadcast_ChangeSettings();
+  startup_exec = millis();
+  return true;
 }
 
 //
@@ -75,24 +93,34 @@ char settings_level;
 
 void Broadcast_ChangeSettings()
 {
-  DateTime now;
   if (startupSession == STARTUP_HALT) {
     // not within startup sessions
     while (nextWidget()) { // update to permissible options
       ;
     }
-#ifndef BULK_SETTING_TRANSFER
-    return;
-#endif
   }
   FIFOCPY_P(0, F("TD"), 2);
-  now = rtc.now();
-  sprintHex(0 * 2 + 2, (uint8_t)(now.year() % 100));
-  sprintHex(1 * 2 + 2, (uint8_t)now.month());
-  sprintHex(2 * 2 + 2, (uint8_t)now.day());
-  sprintHex(3 * 2 + 2, (uint8_t)now.hour());
-  sprintHex(4 * 2 + 2, (uint8_t)now.minute());
-  sprintHex(5 * 2 + 2, (uint8_t)now.second());
+#ifdef USE_RTC
+  {
+    DateTime now = rtc.now();
+    sprintHex(0 * 2 + 2, (uint8_t)(now.year() % 100));
+    sprintHex(1 * 2 + 2, (uint8_t)now.month());
+    sprintHex(2 * 2 + 2, (uint8_t)now.day());
+    sprintHex(3 * 2 + 2, (uint8_t)now.hour());
+    sprintHex(4 * 2 + 2, (uint8_t)now.minute());
+    sprintHex(5 * 2 + 2, (uint8_t)now.second());
+  }
+#else
+  {
+    time_t t = now();
+    sprintHex(0 * 2 + 2, (uint8_t)(year(t) % 100));
+    sprintHex(1 * 2 + 2, (uint8_t)month(t));
+    sprintHex(2 * 2 + 2, (uint8_t)day(t));
+    sprintHex(3 * 2 + 2, (uint8_t)hour(t));
+    sprintHex(4 * 2 + 2, (uint8_t)minute(t));
+    sprintHex(5 * 2 + 2, (uint8_t)second(t));
+  }
+#endif /* USE_RTC */
   sprintHex(6 * 2 + 2, setting.p.mode);
   sprintHex(7 * 2 + 2, setting.p.photo_resolution);
   sprintHex(8 * 2 + 2, 0xff);
@@ -132,7 +160,6 @@ void Broadcast_ChangeSettings()
 
 void Broadcast_ChangeSetting(char id)
 {
-#ifndef BULK_SETTING_TRANSFER
   switch (id) {
     case &setting.p.video_resolution - setting.b:
       __queueIn('V', 'V', setting.p.video_resolution); break;
@@ -183,7 +210,6 @@ void Broadcast_ChangeSetting(char id)
     case &setting.p.auto_power_down - setting.b:
       __queueIn('A', 'O', setting.p.auto_power_down); break;
   }
-#endif /* not BULK_SETTING_TRANSFER */
 }
 
 void Broadcast_StartRecording()

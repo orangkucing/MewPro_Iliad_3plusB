@@ -5,30 +5,39 @@
 #include "Videomode.h"
 #include "MenuText.h"
 
-#define __VERSION_STRING__ "v1.2.1"
+#define __VERSION_STRING__ "v1.3.5"
 
-#include <LiquidCrystal.h>
+#ifdef USE_LCD
+#  include <LiquidCrystal.h>
 // initialize the library with the numbers of the interface pins
 // lcd(RS, Enable, Data4, Data5, Data6, Data7)
 LiquidCrystal lcd(LCD_RS, LCD_ENABLE, LCD_DATA4, LCD_DATA5, LCD_DATA6, LCD_DATA7);
-#define LCD_SIZE_X 16
-#define LCD_SIZE_Y 2
+#  define LCD_SIZE_X 16
+#  define LCD_SIZE_Y 2
+#endif /* USE_LCD */
 
+#ifdef USE_IR_REMOTE
 // using IRremote library at
 //     https://github.com/z3t0/Arduino-IRremote
 // WARNING: The IRremote library conflicts with RobotIRremote library in the standard Arduino IDE.
 // So please delete your_IDE_folder/Contents/Java/libraries/RobotIRremote 
-#include <IRremote.h>
+#  include <IRremote.h>
 IRrecv irrecv(IR_RECEIVE);
+#endif /* USE_IR_REMOTE */
 
-#include <Wire.h>
+#ifdef USE_RTC
+#  include <Wire.h>
 // using RTClib at
 //     https://learn.adafruit.com/adafruit-ds3231-precision-rtc-breakout/wiring-and-test
-#include "RTClib.h"
+// ***** comment out the following line unless USE_RTC
+#  include "RTClib.h"
 RTC_DS3231 rtc;
-
-// Input from PC or master camera
-#define SERIAL Serial
+#else
+// Time and TimeAlarms libraries are downloadable from
+//   http://www.pjrc.com/teensy/td_libs_Time.html
+// ***** uncomment unless USE_RTC
+//#  include <TimeLib.h>
+#endif /* USE_RTC */
 
 #define MEWPRO_BUFFER_LENGTH 256
 
@@ -37,7 +46,6 @@ int fifo_readindex = 0;
 int fifo_writeindex = 0;
 #define FIFO(i) (command_buf[(fifo_writeindex + (i)) % MEWPRO_BUFFER_LENGTH])
 #define FIFO_INC(n) do { fifo_writeindex = (fifo_writeindex + (n)) % MEWPRO_BUFFER_LENGTH; } while (0)
-#define WRITE_CHAR(c) do { BROADCAST.write(c); SERIAL.print(c); } while (0)
 
 byte buf[MEWPRO_BUFFER_LENGTH];
 int bufp = 1;
@@ -84,14 +92,14 @@ unsigned int record_time;
 char startupSession = STARTUP_HALT;
 // function prototype declaration required here
 // because current Arduino IDE can't automatically do this
-void startup_delay0(void);
-void startup_delay(void);
-void startup0(void);
+boolean startup_init(void);
+boolean startup_delay0(void);
+boolean startup0(void);
 
-void (*startup[])(void) = {
+boolean (*startup[])(void) = {
+  startup_init,
   startup_delay0,
-  startup0, startup_delay,
-  startup0, // the first TD is ignored by camera sometimes... so we send the same thing twice.
+  startup0,
   NULL
 };
 

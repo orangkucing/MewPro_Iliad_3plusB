@@ -14,13 +14,16 @@ void checkTerminalCommands()
     static boolean shiftable;
     char c;
 
-    if (SERIAL.available()) {
-      c = SERIAL.read();
-    } else {
+    if (fifo_readindex != fifo_writeindex) {
       c = command_buf[fifo_readindex];
       ++fifo_readindex %= MEWPRO_BUFFER_LENGTH;
+      WRITE_CHAR(c);
+    } else {
+      c = SERIAL.read();
+      if (startupSession == STARTUP_HALT) { // suspend sending bulk setting commands too quickly
+        WRITE_CHAR(c);
+      }
     }
-    WRITE_CHAR(c);
     
     switch (c) {
       case ' ':
@@ -38,8 +41,9 @@ void checkTerminalCommands()
       case '@':
         bufp = 1;
         session = 0xFF;
-        SERIAL.println(F("\ncamera power on"));
+        DEBUG_println(F("\ncamera power on"));
         __emptyInputBuffer();
+        WRITE_CHAR('\n');   // this is required because the buffer is made empty
         startupSession = 0; // emit power on sequence
         disp_state = MENU_MAIN;
         setting.p.mode = setting.p.default_app_mode;
