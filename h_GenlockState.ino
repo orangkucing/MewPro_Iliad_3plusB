@@ -39,15 +39,14 @@ void checkGenlockState_Video()
       recording_state = STATE_END;
       break;
     case STATE_END:
-      if (millis() - command_sent > 400) {
+      if (millis() - command_sent > 200) {
         digitalWrite(TRIG, LOW); // video stops at FALLING edge
-        delay(1);
-        digitalWrite(TRIG, HIGH);
         recording_state = STATE_SYNC_OFF;
       }
       break;
     case STATE_SYNC_OFF:
-      if (millis() - command_sent > 1400) {
+      if (millis() - command_sent > 1200) {
+        digitalWrite(TRIG, HIGH);
         DEBUG_println(F("genlock signal stop"));
         StopSyncSignal();
         recording_state = STATE_IDLE;
